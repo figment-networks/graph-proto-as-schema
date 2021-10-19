@@ -1,7 +1,7 @@
 import {stripNamespace} from "./convert";
 import * as t from "proto-parser";
-
-import {WriteStream} from "fs";
+import {existsSync, WriteStream} from "fs";
+import { formatError } from "graphql";
 
 
 export function toTypescriptDefinitions(
@@ -27,11 +27,50 @@ export function toTypescriptDefinitions(
               const mdEl = md.fields[key];
 
 
+              let type:string;
 
-              tscn.fields.push(new TsClassFields(mdEl.name, mdEl.type.value));
+              switch (mdEl.type.syntaxType) {
+                case t.SyntaxType.BaseType:
+                  type = ""
+                  switch (mdEl.type.value) {
+                    case "int32":
+                      type = "i32";
+                      break;
+                    case "uint32":
+                      type = "u32";
+                      break;
+                    case "uint64":
+                      type = "i64";
+                      break;
+                    case "int64":
+                      type = "u64";
+                      break;
+                    case "bool":
+                      type = "boolean";
+                      break;
+                    case "bytes":
+                      type = "Bytes";
+                      break;
+                    default:
+                      type = mdEl.type.value;
+                  }
+                break;
+                case t.SyntaxType.Identifier:
+                  type = mdEl.type.value;
+                break;
+              }
+
+              const tcf = new TsClassFields(mdEl.name, type)
+              if (mdEl.repeated){
+                tcf.isArray =  true;
+              }
+              tscn.fields.push(tcf);
             }
+
           }
           namespace.list.push(tscn);
+
+
 
           /*
           const otd = new ObjectTypeDefinitionNode(new NameNode(el.name));
@@ -116,35 +155,24 @@ export function toTypescriptDefinitions(
           arr.push(otd);
           */
         } else if (el.syntaxType === t.SyntaxType.EnumDefinition) {
-            /*
+
           const ed = el as t.EnumDefinition;
 
-          const etd = new EnumTypeDefinitionNode(new NameNode(el.name));
-          if (
-            el.comment !== undefined &&
-            el.comment !== "" &&
-            el.comment !== null
-          ) {
-            etd.description = new StringValueNode(el.comment, false);
-          }
+          const tscn = new TsEnumNode(ed.name);
+          tscn.values = new Map<string,number>();
 
-          etd.directives?.push(new DirectiveNode(new NameNode("entity")));
-          for (const key in ed.values) {
+          for (const [key, val] of Object.entries(ed.values)) {
             if (Object.prototype.hasOwnProperty.call(ed.values, key)) {
-              // TODO(lukanus): what the hell to do with KV mappings
-              let evd = new EnumValueDefinitionNode(new NameNode(key));
-              etd.values.push(evd);
+              tscn.values.set(key,val)
             }
           }
+          namespace.list.push(tscn);
 
-          arr.push(etd);
-          */
         }
       }
     }
 
     return namespace
-    //return new DocumentNode(arr) as graphql.DocumentNode;
   }
 
 
@@ -183,7 +211,7 @@ class TsClassNode {
 
         ws.write(`\n\t\tconstructor(\n`);
         for (const l of this.fields) {
-          ws.write(`\t\t\t${l.name}: ${l.type},\n`);
+          ws.write(`\t\t\t${l.name}: ${l.printType()},\n`);
         }
 
         ws.write(`\t\t) {\n`);
@@ -210,12 +238,20 @@ class TsClassFields {
       this.isArray = false;
   }
 
+  printType():string {
+    if (this.isArray){
+      return `Array<${this.type}>`
+    } else {
+      return `${this.type}`
+    }
+
+  }
 
   printTypescript(ws: WriteStream) {
     if (this.isPublic) {
       ws.write(`\t\tpublic `);
     }
-    ws.write(`${this.name}: ${this.type}\n `);
+    ws.write(`${this.name}: ${this.printType()}\n `);
   }
 }
 
@@ -227,6 +263,20 @@ class TsEnumNode {
       this.name = name;
       this.values = new Map<string, number>();
   }
+
+  printTypescript(ws: WriteStream) {
+console.debug(this);
+
+    ws.write(`\texport enum ${this.name} { \n`);
+
+    //if (this.values !== undefined) {
+      for (const [l,v] of this.values) {
+        ws.write(`\t\t${l}= ${v},\n`);
+      }
+  //  }
+
+    ws.write(`\t}\n\n`);
+}
 }
 
 class TsNamespace {
@@ -236,4 +286,6 @@ class TsNamespace {
   constructor(name:string) {
       this.name = name;
   }
+
+
 }

@@ -13,8 +13,6 @@ import {
 } from "./types";
 import * as t from "proto-parser";
 import * as graphql from "graphql";
-import * as ts from "typescript";
-import { Hash } from "crypto";
 
 export function toSchemaObjects(
   protoDocument: t.ProtoDocument,
