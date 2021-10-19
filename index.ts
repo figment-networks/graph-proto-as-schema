@@ -31,6 +31,12 @@ async function process() {
         type: "string",
       })
       .default("pattern", ".proto", "just proto files")
+      .option("force_non_null_lists", {
+        description: "force graph compatible not null fields in lists",
+        //alias: "n",
+        type: "boolean",
+      })
+      .default("force_non_null_lists", true, "by default apply the param")
       .help()
       .alias("help", "h").argv;
 
@@ -46,7 +52,8 @@ async function process() {
       argv.dir.toString(),
       argv.dir.toString(),
       argv.pattern?.toString(),
-      argv.output.toString()
+      argv.output.toString(),
+      argv.force_non_null_lists.valueOf()
     );
   } catch (e) {
     throw e;
@@ -57,7 +64,8 @@ async function walkPath(
   basepath: string,
   path: string,
   pattern: string,
-  output: string
+  output: string,
+  forceNonNullLists: boolean
 ) {
   try {
     const files = await readdir(path, { withFileTypes: true });
@@ -67,7 +75,7 @@ async function walkPath(
       }
 
       if (file.isDirectory()) {
-        await walkPath(basepath, path + "/" + file.name, pattern, output);
+        await walkPath(basepath, path + "/" + file.name, pattern, output, forceNonNullLists);
       } else {
         if (file.name.includes(pattern)) {
           console.info("processing " + path + "/" + file.name);
@@ -75,7 +83,7 @@ async function walkPath(
 
           const fContents = readFileSync(path + "/" + file.name, "utf-8");
           const protoDocument = t.parse(fContents.toString()) as t.ProtoDocument;
-          const gqlp = graphql.print(toSchemaObjects(protoDocument));
+          const gqlp = graphql.print(toSchemaObjects(protoDocument, forceNonNullLists));
 
           mkdirSync(dir, { recursive: true });
           const filename = nextFilename(file.name, dir, 0);

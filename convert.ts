@@ -15,7 +15,8 @@ import * as t from "proto-parser";
 import * as graphql from "graphql";
 
 export function toSchemaObjects(
-  protoDocument: t.ProtoDocument
+  protoDocument: t.ProtoDocument,
+  forceNonNullLists: boolean
 ): graphql.DocumentNode {
   let arr = new Array();
   const mainNamespace = stripNamespace(protoDocument.root);
@@ -77,8 +78,11 @@ export function toSchemaObjects(
             }
 
             tn = new NamedTypeNode(new NameNode(tValue));
-            if (mdEl.repeated) {
-              tn = new ListTypeNode(tn);
+            if  (mdEl.repeated) {
+                if (forceNonNullLists && (mdEl.type.syntaxType == t.SyntaxType.Identifier || tValue == "Bytes")) {
+                    tn = new NonNullTypeNode(tn);
+                }
+                tn = new ListTypeNode(tn);
             }
 
             if (!mdEl.optional) {
