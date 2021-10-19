@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+      "incremental": true,
+      "target": "ES2019",
+      "module": "commonjs",
+      "outDir": "./dist",
+      "removeComments": false,
+      "forceConsistentCasingInFileNames": true,
+      "strict": true,
+      "skipLibCheck": true,
+      "esModuleInterop": true,
+      "moduleResolution": "node"
+    },
+    "exclude": ["assembly_script", "build", "dist"]
+  }
