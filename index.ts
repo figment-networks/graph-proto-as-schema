@@ -38,7 +38,7 @@ async function process() {
       throw Error("given path does not exists ");
     }
 
-    if (!existsSync(argv.output) )  {
+    if (!existsSync(argv.output)) {
       mkdirSync(argv.output, { recursive: true });
     }
 
@@ -53,7 +53,12 @@ async function process() {
   }
 }
 
-async function walkPath(basepath: string,  path: string, pattern: string, output: string) {
+async function walkPath(
+  basepath: string,
+  path: string,
+  pattern: string,
+  output: string
+) {
   try {
     const files = await readdir(path, { withFileTypes: true });
     for (const file of files) {
@@ -61,14 +66,12 @@ async function walkPath(basepath: string,  path: string, pattern: string, output
         continue;
       }
 
-      //console.log(file, path, pattern, output);
       if (file.isDirectory()) {
-        await walkPath(basepath, path+"/"+file.name, pattern, output);
+        await walkPath(basepath, path + "/" + file.name, pattern, output);
       } else {
         if (file.name.includes(pattern)) {
-          console.info("processing "+ path + "/" + file.name);
+          console.info("processing " + path + "/" + file.name);
           const dir = output + path.replace(basepath, "");
-
 
           const fContents = readFileSync(path + "/" + file.name, "utf-8");
           const protoDocument = t.parse(fContents.toString()) as t.ProtoDocument;
