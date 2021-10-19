@@ -13,6 +13,8 @@ import {
 } from "./types";
 import * as t from "proto-parser";
 import * as graphql from "graphql";
+import * as ts from "typescript";
+import { Hash } from "crypto";
 
 export function toSchemaObjects(
   protoDocument: t.ProtoDocument,
@@ -133,7 +135,7 @@ export function toSchemaObjects(
   return new DocumentNode(arr) as graphql.DocumentNode;
 }
 
-function stripNamespace(
+export function stripNamespace(
   protoRoot: t.ProtoRoot | t.NamespaceBase
 ): t.NamespaceBase | null {
   if (protoRoot.nested !== undefined) {

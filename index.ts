@@ -3,7 +3,8 @@ import * as graphql from "graphql";
 import * as yargs from "yargs";
 
 import { toSchemaObjects } from "./convert";
-import { readFileSync, existsSync, writeFileSync, mkdirSync } from "fs";
+import { toTypescriptDefinitions, printTypescriptNamespace} from "./typescript";
+import { readFileSync, existsSync, writeFileSync, mkdirSync, createWriteStream } from "fs";
 import { readdir } from "fs/promises";
 
 function main() {
@@ -85,10 +86,18 @@ async function walkPath(
           const protoDocument = t.parse(fContents.toString()) as t.ProtoDocument;
           const gqlp = graphql.print(toSchemaObjects(protoDocument, forceNonNullLists));
 
-          mkdirSync(dir, { recursive: true });
-          const filename = nextFilename(file.name, dir, 0);
 
+          mkdirSync(dir, { recursive: true });
+          const filename = nextFilename(file.name, dir, 0, ".graphql");
           writeFileSync(filename, gqlp);
+
+
+          const filenameTS = nextFilename(file.name, dir, 0, ".ts");
+          let ws = createWriteStream(filenameTS);
+          const tsd = toTypescriptDefinitions(protoDocument);
+
+          printTypescriptNamespace(ws, tsd)
+
         }
       }
     }
@@ -97,16 +106,16 @@ async function walkPath(
   }
 }
 
-function nextFilename(name: string, dir: string, iter: number): string {
-  if (iter == 0 && !existsSync(dir + "/" + name + ".graphql")) {
-    return dir + "/" + name + ".graphql";
+function nextFilename(name: string, dir: string, iter: number, format: string): string {
+  if (iter == 0 && !existsSync(dir + "/" + name + format)) {
+    return dir + "/" + name + format;
   }
 
-  if (!existsSync(dir + "/" + name + "." + iter + ".graphql")) {
-    return dir + "/" + name + "." + iter + ".graphql";
+  if (!existsSync(dir + "/" + name + "." + iter + format)) {
+    return dir + "/" + name + "." + iter + format;
   }
 
-  return nextFilename(name, dir, iter + 1);
+  return nextFilename(name, dir, iter + 1, format);
 }
 
 main();
