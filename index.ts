@@ -94,11 +94,11 @@ function nextFilename(name: string, dir: string, iter: number): string {
     return dir + "/" + name + ".graphql";
   }
 
-  if (existsSync(dir + "/" + name + "." + iter + ".graphql")) {
-    return nextFilename(name, dir, iter++);
+  if (!existsSync(dir + "/" + name + "." + iter + ".graphql")) {
+    return dir + "/" + name + "." + iter + ".graphql";
   }
 
-  return dir + "/" + name + "." + iter + ".graphql";
+  return nextFilename(name, dir, iter + 1);
 }
 
 main();
