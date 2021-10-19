@@ -34,8 +34,12 @@ async function process() {
       .help()
       .alias("help", "h").argv;
 
-    if (!existsSync(argv.output) || !existsSync(argv.dir)) {
+    if (!existsSync(argv.dir)) {
       throw Error("given path does not exists ");
+    }
+
+    if (!existsSync(argv.output) )  {
+      mkdirSync(argv.output, { recursive: true });
     }
 
     await walkPath(
@@ -62,11 +66,14 @@ async function walkPath(basepath: string,  path: string, pattern: string, output
         await walkPath(basepath, path+"/"+file.name, pattern, output);
       } else {
         if (file.name.includes(pattern)) {
+          console.info("processing "+ path + "/" + file.name);
+          const dir = output + path.replace(basepath, "");
+
+
           const fContents = readFileSync(path + "/" + file.name, "utf-8");
           const protoDocument = t.parse(fContents.toString()) as t.ProtoDocument;
           const gqlp = graphql.print(toSchemaObjects(protoDocument));
 
-          const dir = output + path.replace(basepath, "");
           mkdirSync(dir, { recursive: true });
           const filename = nextFilename(file.name, dir, 0);
 
@@ -80,7 +87,6 @@ async function walkPath(basepath: string,  path: string, pattern: string, output
 }
 
 function nextFilename(name: string, dir: string, iter: number): string {
-  console.log(name, dir, iter );
   if (iter == 0 && !existsSync(dir + "/" + name + ".graphql")) {
     return dir + "/" + name + ".graphql";
   }
