@@ -1,7 +1,6 @@
 import { stripNamespace } from "./convert";
 import * as t from "proto-parser";
 import { WriteStream } from "fs";
-import { formatError } from "graphql";
 
 export function toTypescriptDefinitions(
   protoDocument: t.ProtoDocument,
