@@ -7,6 +7,7 @@ export function toTypescriptDefinitions(
 ): TsNamespace {
   const namespace = new TsNamespace("");
   namespace.list = new Array<TsClassNode | TsEnumNode>();
+  var types = Array<string>();
 
   const mainNamespace = stripNamespace(protoDocument.root);
   const nested = mainNamespace?.nested;
@@ -58,6 +59,10 @@ export function toTypescriptDefinitions(
               // force externally defined types base on options.
               for (const [key, val] of Object.entries(mdEl.options)) {
                 if (key === "(fig.bytetype)") {
+                  if (!types.includes(val)) {
+                    types.push(val);
+                    namespace.list.unshift(new TsTypeNode(val, "Bytes"));
+                  }
                   type = val;
                 }
               }
@@ -165,6 +170,22 @@ class TsClassFields {
   }
 }
 
+
+class TsTypeNode {
+  name: string;
+  value: string;
+
+  constructor(name: string, value: string) {
+    this.name = name;
+    this.value = value;
+  }
+
+  printTypescript(ws: WriteStream) {
+    ws.write(`\texport type ${this.name} = ${this.value}\n\n`);
+  }
+
+}
+
 class TsEnumNode {
   name: string;
   values: Map<string, number>;
@@ -187,7 +208,7 @@ class TsEnumNode {
 
 class TsNamespace {
   name: string;
-  list?: Array<TsClassNode | TsEnumNode>;
+  list?: Array<TsClassNode | TsEnumNode | TsTypeNode>;
 
   constructor(name: string) {
     this.name = name;

@@ -113,7 +113,6 @@ async function walkPath(
             tsd.name = tsNamespace;
             printTypescriptNamespace(ws, tsd)
           }
-
         }
       }
     }
