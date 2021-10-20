@@ -1,6 +1,8 @@
 # graph-proto-as-schema
 
-This project allows to generate the Graph compatible graphQL schema files from proto files
+This project allows to generate the Graph compatible graphQL schema files from proto files,
+
+Additionally this script allows you to generate typescript/assemblyscript structures needed for graph-ts repository.
 
 ## Build
 
@@ -29,5 +31,8 @@ Options:
                                             [string] [default: just proto files]
       --force_non_null_lists  force graph compatible not null fields in lists
                                  [boolean] [default: by default apply the param]
+      --typescipt             generate typescript     [boolean] [default: false]
+      --typescript_namespace  namespace to apply when generating ts file.
+                                                         [string] [default: "t"]
   -h, --help                  Show help                                [boolean]
 ```
