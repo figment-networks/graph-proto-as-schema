@@ -3,7 +3,8 @@ import * as graphql from "graphql";
 import * as yargs from "yargs";
 
 import { toSchemaObjects } from "./convert";
-import { readFileSync, existsSync, writeFileSync, mkdirSync } from "fs";
+import { toTypescriptDefinitions, printTypescriptNamespace} from "./typescript";
+import { readFileSync, existsSync, writeFileSync, mkdirSync, createWriteStream } from "fs";
 import { readdir } from "fs/promises";
 
 function main() {
@@ -33,10 +34,21 @@ async function process() {
       .default("pattern", ".proto", "just proto files")
       .option("force_non_null_lists", {
         description: "force graph compatible not null fields in lists",
-        //alias: "n",
+
         type: "boolean",
       })
       .default("force_non_null_lists", true, "by default apply the param")
+      .option("typescipt", {
+        description: "generate typescript",
+        alias: "ts",
+        type: "boolean",
+      })
+      .default("typescipt", false)
+      .option("typescript_namespace", {
+        description: "namespace to apply when generating ts file.",
+        type: "string",
+      })
+      .default("typescript_namespace", "t", "")
       .help()
       .alias("help", "h").argv;
 
@@ -53,7 +65,9 @@ async function process() {
       argv.dir.toString(),
       argv.pattern?.toString(),
       argv.output.toString(),
-      argv.force_non_null_lists.valueOf()
+      argv.force_non_null_lists.valueOf(),
+      argv.typescipt.valueOf(),
+      argv.typescript_namespace.toString()
     );
   } catch (e) {
     throw e;
@@ -65,7 +79,9 @@ async function walkPath(
   path: string,
   pattern: string,
   output: string,
-  forceNonNullLists: boolean
+  forceNonNullLists: boolean,
+  generateTS: boolean,
+  tsNamespace: string,
 ) {
   try {
     const files = await readdir(path, { withFileTypes: true });
@@ -75,7 +91,7 @@ async function walkPath(
       }
 
       if (file.isDirectory()) {
-        await walkPath(basepath, path + "/" + file.name, pattern, output, forceNonNullLists);
+        await walkPath(basepath, path + "/" + file.name, pattern, output, forceNonNullLists, generateTS, tsNamespace);
       } else {
         if (file.name.includes(pattern)) {
           console.info("processing " + path + "/" + file.name);
@@ -85,10 +101,19 @@ async function walkPath(
           const protoDocument = t.parse(fContents.toString()) as t.ProtoDocument;
           const gqlp = graphql.print(toSchemaObjects(protoDocument, forceNonNullLists));
 
-          mkdirSync(dir, { recursive: true });
-          const filename = nextFilename(file.name, dir, 0);
 
+          mkdirSync(dir, { recursive: true });
+          const filename = nextFilename(file.name, dir, 0, ".graphql");
           writeFileSync(filename, gqlp);
+
+          if (generateTS) {
+            const filenameTS = nextFilename(file.name, dir, 0, ".ts");
+            let ws = createWriteStream(filenameTS);
+            const tsd = toTypescriptDefinitions(protoDocument);
+            tsd.name = tsNamespace;
+            printTypescriptNamespace(ws, tsd)
+          }
+
         }
       }
     }
@@ -97,16 +122,16 @@ async function walkPath(
   }
 }
 
-function nextFilename(name: string, dir: string, iter: number): string {
-  if (iter == 0 && !existsSync(dir + "/" + name + ".graphql")) {
-    return dir + "/" + name + ".graphql";
+function nextFilename(name: string, dir: string, iter: number, format: string): string {
+  if (iter == 0 && !existsSync(dir + "/" + name + format)) {
+    return dir + "/" + name + format;
   }
 
-  if (!existsSync(dir + "/" + name + "." + iter + ".graphql")) {
-    return dir + "/" + name + "." + iter + ".graphql";
+  if (!existsSync(dir + "/" + name + "." + iter + format)) {
+    return dir + "/" + name + "." + iter + format;
   }
 
-  return nextFilename(name, dir, iter + 1);
+  return nextFilename(name, dir, iter + 1, format);
 }
 
 main();

@@ -12,6 +12,7 @@
         "@types/yargs": "^17.0.4",
         "graphql": "^15.6.1",
         "proto-parser": "^0.0.7",
+        "typescript": "^4.4.4",
         "yargs": "^17.2.1"
     }
 }

@@ -133,7 +133,7 @@ export function toSchemaObjects(
   return new DocumentNode(arr) as graphql.DocumentNode;
 }
 
-function stripNamespace(
+export function stripNamespace(
   protoRoot: t.ProtoRoot | t.NamespaceBase
 ): t.NamespaceBase | null {
   if (protoRoot.nested !== undefined) {
