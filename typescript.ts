@@ -1,180 +1,93 @@
-import {stripNamespace} from "./convert";
+import { stripNamespace } from "./convert";
 import * as t from "proto-parser";
-import {existsSync, WriteStream} from "fs";
+import { WriteStream } from "fs";
 import { formatError } from "graphql";
 
-
 export function toTypescriptDefinitions(
-    protoDocument: t.ProtoDocument
-  ): TsNamespace {
-    const namespace = new TsNamespace("")
-    namespace.list =  new Array<TsClassNode|TsEnumNode>();
+  protoDocument: t.ProtoDocument,
+): TsNamespace {
+  const namespace = new TsNamespace("");
+  namespace.list = new Array<TsClassNode | TsEnumNode>();
 
-    const mainNamespace = stripNamespace(protoDocument.root);
-    const nested = mainNamespace?.nested;
-    for (const key in nested) {
-      if (Object.prototype.hasOwnProperty.call(nested, key)) {
-        const el = nested[key];
-        if (el.syntaxType === t.SyntaxType.MessageDefinition) {
+  const mainNamespace = stripNamespace(protoDocument.root);
+  const nested = mainNamespace?.nested;
+  for (const key in nested) {
+    if (Object.prototype.hasOwnProperty.call(nested, key)) {
+      const el = nested[key];
+      if (el.syntaxType === t.SyntaxType.MessageDefinition) {
+        const tscn = new TsClassNode(el.name);
+        tscn.fields = new Array<TsClassFields>();
 
-          const tscn = new TsClassNode(el.name);
-          tscn.fields = new Array<TsClassFields>();
+        const md = el as t.MessageDefinition;
+        for (const key in md.fields) {
+          if (Object.prototype.hasOwnProperty.call(md.fields, key)) {
+            const mdEl = md.fields[key];
 
+            let type: string;
 
-          const md = el as t.MessageDefinition;
-          for (const key in md.fields) {
-            if (Object.prototype.hasOwnProperty.call(md.fields, key)) {
-              const mdEl = md.fields[key];
-
-
-              let type:string;
-
-              switch (mdEl.type.syntaxType) {
-                case t.SyntaxType.BaseType:
-                  type = ""
-                  switch (mdEl.type.value) {
-                    case "int32":
-                      type = "i32";
-                      break;
-                    case "uint32":
-                      type = "u32";
-                      break;
-                    case "uint64":
-                      type = "i64";
-                      break;
-                    case "int64":
-                      type = "u64";
-                      break;
-                    case "bool":
-                      type = "boolean";
-                      break;
-                    case "bytes":
-                      type = "Bytes";
-                      break;
-                    default:
-                      type = mdEl.type.value;
-                  }
+            switch (mdEl.type.syntaxType) {
+              case t.SyntaxType.BaseType:
+                type = "";
+                switch (mdEl.type.value) {
+                  case "int32":
+                    type = "i32";
+                    break;
+                  case "uint32":
+                    type = "u32";
+                    break;
+                  case "uint64":
+                    type = "i64";
+                    break;
+                  case "int64":
+                    type = "u64";
+                    break;
+                  case "bool":
+                    type = "bool";
+                    break;
+                  case "bytes":
+                    type = "Bytes";
+                    break;
+                  default:
+                    type = mdEl.type.value;
+                }
                 break;
-                case t.SyntaxType.Identifier:
-                  type = mdEl.type.value;
+              case t.SyntaxType.Identifier:
+                type = mdEl.type.value;
                 break;
-              }
-
-              const tcf = new TsClassFields(mdEl.name, type)
-              if (mdEl.repeated){
-                tcf.isArray =  true;
-              }
-              tscn.fields.push(tcf);
             }
-
-          }
-          namespace.list.push(tscn);
-
-
-
-          /*
-          const otd = new ObjectTypeDefinitionNode(new NameNode(el.name));
-          if (
-            el.comment !== undefined &&
-            el.comment !== "" &&
-            el.comment !== null
-          ) {
-            otd.description = new StringValueNode(el.comment, false);
-          }
-
-          otd.directives.push(new DirectiveNode(new NameNode("entity")));
-          const fdn = new FieldDefinitionNode(
-            new NameNode("id"),
-            new NonNullTypeNode(new NamedTypeNode(new NameNode("ID")))
-          );
-          otd.fields.push(fdn);
-
-          const md = el as t.MessageDefinition;
-          for (const key in md.fields) {
-            if (Object.prototype.hasOwnProperty.call(md.fields, key)) {
-              const mdEl = md.fields[key];
-              let tn;
-              let name;
-              let tValue = mdEl.type.value;
-              switch (mdEl.type.syntaxType) {
-                case t.SyntaxType.BaseType:
-                  name = mdEl.name;
-                  switch (mdEl.type.value) {
-                    case "int32":
-                      tValue = "Int";
-                      break;
-                    case "uint32":
-                    case "uint64":
-                    case "int64":
-                      tValue = "BigInt";
-                      break;
-                    case "bool":
-                      tValue = "Boolean";
-                      break;
-                    case "bytes":
-                      tValue = "Bytes";
-                      break;
-                    case "string":
-                      tValue = "String";
-                      break;
-                  }
-                  break;
-                case t.SyntaxType.Identifier:
-                  name = mdEl.name;
-                  tValue = mdEl.type.value;
-                  break;
+            if (mdEl.options !== undefined) {
+              // force externally defined types base on options.
+              for (const [key, val] of Object.entries(mdEl.options)) {
+                if (key === "(fig.bytetype)") {
+                  type = val;
+                }
               }
-
-              tn = new NamedTypeNode(new NameNode(tValue));
-              if  (mdEl.repeated) {
-                  if (forceNonNullLists && (mdEl.type.syntaxType == t.SyntaxType.Identifier || tValue == "Bytes")) {
-                      tn = new NonNullTypeNode(tn);
-                  }
-                  tn = new ListTypeNode(tn);
-              }
-
-              if (!mdEl.optional) {
-                tn = new NonNullTypeNode(tn);
-              }
-
-              const fdn = new FieldDefinitionNode(
-                new NameNode(name),
-                tn as graphql.TypeNode
-              );
-              if (
-                mdEl.comment !== undefined &&
-                mdEl.comment !== "" &&
-                mdEl.comment !== null
-              ) {
-                fdn.description = new StringValueNode(mdEl.comment);
-              }
-              otd.fields.push(fdn);
             }
-          }
-
-          arr.push(otd);
-          */
-        } else if (el.syntaxType === t.SyntaxType.EnumDefinition) {
-
-          const ed = el as t.EnumDefinition;
-
-          const tscn = new TsEnumNode(ed.name);
-          tscn.values = new Map<string,number>();
-
-          for (const [key, val] of Object.entries(ed.values)) {
-            if (Object.prototype.hasOwnProperty.call(ed.values, key)) {
-              tscn.values.set(key,val)
+            const tcf = new TsClassFields(mdEl.name, type);
+            if (mdEl.repeated) {
+              tcf.isArray = true;
             }
+            tscn.fields.push(tcf);
           }
-          namespace.list.push(tscn);
-
         }
+        namespace.list.push(tscn);
+      } else if (el.syntaxType === t.SyntaxType.EnumDefinition) {
+        const ed = el as t.EnumDefinition;
+
+        const tscn = new TsEnumNode(ed.name);
+        tscn.values = new Map<string, number>();
+
+        for (const [key, val] of Object.entries(ed.values)) {
+          if (Object.prototype.hasOwnProperty.call(ed.values, key)) {
+            tscn.values.set(key, val);
+          }
+        }
+        namespace.list.push(tscn);
       }
     }
-
-    return namespace
   }
-
+  return namespace;
+}
 
 export function printTypescriptNamespace(ws: WriteStream, n: TsNamespace) {
   ws.write(`export namespace ${n.name} { \n`);
@@ -188,40 +101,39 @@ export function printTypescriptNamespace(ws: WriteStream, n: TsNamespace) {
   ws.end();
 }
 
-
 interface TsPrintable {
-  printTypescript(ws: WriteStream): void
+  printTypescript(ws: WriteStream): void;
 }
 
 class TsClassNode {
   name: string;
   fields?: Array<TsClassFields>;
 
-  constructor(name:string) {
-      this.name = name;
+  constructor(name: string) {
+    this.name = name;
   }
 
   printTypescript(ws: WriteStream) {
-      ws.write(`\texport class ${this.name} { \n`);
+    ws.write(`\texport class ${this.name} { \n`);
 
-      if (this.fields !== undefined) {
-        for (const l of this.fields) {
-          l.printTypescript(ws);
-        }
-
-        ws.write(`\n\t\tconstructor(\n`);
-        for (const l of this.fields) {
-          ws.write(`\t\t\t${l.name}: ${l.printType()},\n`);
-        }
-
-        ws.write(`\t\t) {\n`);
-        for (const l of this.fields) {
-          ws.write(`\t\t\tthis.${l.name} = ${l.name};\n`);
-        }
-        ws.write(`\t\t}\n`);
+    if (this.fields !== undefined) {
+      for (const l of this.fields) {
+        l.printTypescript(ws);
       }
 
-      ws.write(`\t}\n\n`);
+      ws.write(`\n\t\tconstructor(\n`);
+      for (const l of this.fields) {
+        ws.write(`\t\t\t${l.name}: ${l.printType()},\n`);
+      }
+
+      ws.write(`\t\t) {\n`);
+      for (const l of this.fields) {
+        ws.write(`\t\t\tthis.${l.name} = ${l.name};\n`);
+      }
+      ws.write(`\t\t}\n`);
+    }
+
+    ws.write(`\t}\n\n`);
   }
 }
 
@@ -231,20 +143,19 @@ class TsClassFields {
   type: string;
   isArray: boolean;
 
-  constructor(name:string, type:string) {
-      this.isPublic = true;
-      this.name = name;
-      this.type = type;
-      this.isArray = false;
+  constructor(name: string, type: string) {
+    this.isPublic = true;
+    this.name = name;
+    this.type = type;
+    this.isArray = false;
   }
 
-  printType():string {
-    if (this.isArray){
-      return `Array<${this.type}>`
+  printType(): string {
+    if (this.isArray) {
+      return `Array<${this.type}>`;
     } else {
-      return `${this.type}`
+      return `${this.type}`;
     }
-
   }
 
   printTypescript(ws: WriteStream) {
@@ -260,32 +171,26 @@ class TsEnumNode {
   values: Map<string, number>;
 
   constructor(name: string) {
-      this.name = name;
-      this.values = new Map<string, number>();
+    this.name = name;
+    this.values = new Map<string, number>();
   }
 
   printTypescript(ws: WriteStream) {
-console.debug(this);
-
     ws.write(`\texport enum ${this.name} { \n`);
 
-    //if (this.values !== undefined) {
-      for (const [l,v] of this.values) {
-        ws.write(`\t\t${l}= ${v},\n`);
-      }
-  //  }
+    for (const [l, v] of this.values) {
+      ws.write(`\t\t${l}= ${v},\n`);
+    }
 
     ws.write(`\t}\n\n`);
-}
+  }
 }
 
 class TsNamespace {
   name: string;
-  list?: Array<TsClassNode|TsEnumNode>;
+  list?: Array<TsClassNode | TsEnumNode>;
 
-  constructor(name:string) {
-      this.name = name;
+  constructor(name: string) {
+    this.name = name;
   }
-
-
 }
