@@ -36,10 +36,10 @@ export function toTypescriptDefinitions(
                     type = "u32";
                     break;
                   case "uint64":
-                    type = "i64";
+                    type = "u64";
                     break;
                   case "int64":
-                    type = "u64";
+                    type = "i64";
                     break;
                   case "bool":
                     type = "bool";
