@@ -31,7 +31,7 @@ Options:
                                             [string] [default: just proto files]
       --force_non_null_lists  force graph compatible not null fields in lists
                                  [boolean] [default: by default apply the param]
-      --typescipt             generate typescript     [boolean] [default: false]
+      --typescipt             generate typescript     [boolean] [default: true]
       --typescript_namespace  namespace to apply when generating ts file.
                                                          [string] [default: "t"]
   -h, --help                  Show help                                [boolean]
