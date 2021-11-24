@@ -43,7 +43,7 @@ async function process() {
         alias: "ts",
         type: "boolean",
       })
-      .default("typescipt", false)
+      .default("typescipt", true)
       .option("typescript_namespace", {
         description: "namespace to apply when generating ts file.",
         type: "string",
