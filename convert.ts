@@ -79,7 +79,7 @@ export function toSchemaObjects(
 
             tn = new NamedTypeNode(new NameNode(tValue));
             if  (mdEl.repeated) {
-                if (forceNonNullLists && (mdEl.type.syntaxType == t.SyntaxType.Identifier || tValue == "Bytes")) {
+                if (forceNonNullLists && (mdEl.type.syntaxType == t.SyntaxType.Identifier || tValue == "Bytes" || tValue == "String")) {
                     tn = new NonNullTypeNode(tn);
                 }
                 tn = new ListTypeNode(tn);
