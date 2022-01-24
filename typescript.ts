@@ -127,12 +127,12 @@ class TsClassNode {
 
       ws.write(`\n\t\tconstructor(\n`);
       for (const l of this.fields) {
-        ws.write(`\t\t\t${l.name}: ${l.printType()},\n`);
+        ws.write(`\t\t\t${camelCase(l.name)}: ${l.printType()},\n`);
       }
 
       ws.write(`\t\t) {\n`);
       for (const l of this.fields) {
-        ws.write(`\t\t\tthis.${l.name} = ${l.name};\n`);
+        ws.write(`\t\t\tthis.${camelCase(l.name)} = ${camelCase(l.name)};\n`);
       }
       ws.write(`\t\t}\n`);
     }
@@ -166,7 +166,7 @@ class TsClassFields {
     if (this.isPublic) {
       ws.write(`\t\tpublic `);
     }
-    ws.write(`${this.name}: ${this.printType()}\n `);
+    ws.write(`${camelCase(this.name)}: ${this.printType()}\n `);
   }
 }
 
@@ -199,7 +199,7 @@ class TsEnumNode {
     ws.write(`\texport enum ${this.name} { \n`);
 
     for (const [l, v] of this.values) {
-      ws.write(`\t\t${l}= ${v},\n`);
+      ws.write(`\t\t${l} = ${v},\n`);
     }
 
     ws.write(`\t}\n\n`);
@@ -213,4 +213,10 @@ class TsNamespace {
   constructor(name: string) {
     this.name = name;
   }
+}
+
+function camelCase(str: String) {
+  return str.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, function(_match, chr) {
+    return chr.toUpperCase();
+  });
 }
