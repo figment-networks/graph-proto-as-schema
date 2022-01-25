@@ -3,6 +3,8 @@ import * as t from "proto-parser";
 import { WriteStream } from "fs";
 
 const INDENT = "  ";
+const INDENT_2 = INDENT.repeat(2);
+const INDENT_3 = INDENT.repeat(3);
 
 export function toTypescriptDefinitions(
   protoDocument: t.ProtoDocument,
@@ -127,16 +129,16 @@ class TsClassNode {
         l.printTypescript(ws);
       }
 
-      ws.write(`\n${INDENT.repeat(2)}constructor(\n`);
+      ws.write(`\n${INDENT_2}constructor(\n`);
       for (const l of this.fields) {
-        ws.write(`${INDENT.repeat(3)}${camelCase(l.name)}: ${l.printType()},\n`);
+        ws.write(`${INDENT_3}${camelCase(l.name)}: ${l.printType()},\n`);
       }
 
-      ws.write(`${INDENT.repeat(2)}) {\n`);
+      ws.write(`${INDENT_2}) {\n`);
       for (const l of this.fields) {
-        ws.write(`${INDENT.repeat(3)}this.${camelCase(l.name)} = ${camelCase(l.name)};\n`);
+        ws.write(`${INDENT_3}this.${camelCase(l.name)} = ${camelCase(l.name)};\n`);
       }
-      ws.write(`${INDENT.repeat(2)}}\n`);
+      ws.write(`${INDENT_2}}\n`);
     }
 
     ws.write(`${INDENT}}\n\n`);
@@ -166,7 +168,7 @@ class TsClassFields {
 
   printTypescript(ws: WriteStream) {
     if (this.isPublic) {
-      ws.write(`${INDENT.repeat(2)}public `);
+      ws.write(`${INDENT_2}public `);
     }
     ws.write(`${camelCase(this.name)}: ${this.printType()}\n`);
   }
@@ -201,7 +203,7 @@ class TsEnumNode {
     ws.write(`${INDENT}export enum ${this.name} {\n`);
 
     for (const [l, v] of this.values) {
-      ws.write(`${INDENT.repeat(2)}${l} = ${v},\n`);
+      ws.write(`${INDENT_2}${l} = ${v},\n`);
     }
 
     ws.write(`${INDENT}}\n\n`);
