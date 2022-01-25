@@ -94,7 +94,7 @@ export function toTypescriptDefinitions(
 }
 
 export function printTypescriptNamespace(ws: WriteStream, n: TsNamespace) {
-  ws.write(`export namespace ${n.name} { \n`);
+  ws.write(`export namespace ${n.name} {\n\n`);
   if (n.list !== undefined) {
     for (const l of n.list) {
       const p = l as TsPrintable;
@@ -118,7 +118,7 @@ class TsClassNode {
   }
 
   printTypescript(ws: WriteStream) {
-    ws.write(`\texport class ${this.name} { \n`);
+    ws.write(`\texport class ${this.name} {\n`);
 
     if (this.fields !== undefined) {
       for (const l of this.fields) {
@@ -166,7 +166,7 @@ class TsClassFields {
     if (this.isPublic) {
       ws.write(`\t\tpublic `);
     }
-    ws.write(`${camelCase(this.name)}: ${this.printType()}\n `);
+    ws.write(`${camelCase(this.name)}: ${this.printType()}\n`);
   }
 }
 
@@ -196,7 +196,7 @@ class TsEnumNode {
   }
 
   printTypescript(ws: WriteStream) {
-    ws.write(`\texport enum ${this.name} { \n`);
+    ws.write(`\texport enum ${this.name} {\n`);
 
     for (const [l, v] of this.values) {
       ws.write(`\t\t${l} = ${v},\n`);
