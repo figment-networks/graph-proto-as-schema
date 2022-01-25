@@ -2,6 +2,8 @@ import { stripNamespace } from "./convert";
 import * as t from "proto-parser";
 import { WriteStream } from "fs";
 
+const INDENT = "  ";
+
 export function toTypescriptDefinitions(
   protoDocument: t.ProtoDocument,
 ): TsNamespace {
@@ -118,26 +120,26 @@ class TsClassNode {
   }
 
   printTypescript(ws: WriteStream) {
-    ws.write(`\texport class ${this.name} {\n`);
+    ws.write(`${INDENT}export class ${this.name} {\n`);
 
     if (this.fields !== undefined) {
       for (const l of this.fields) {
         l.printTypescript(ws);
       }
 
-      ws.write(`\n\t\tconstructor(\n`);
+      ws.write(`\n${INDENT.repeat(2)}constructor(\n`);
       for (const l of this.fields) {
-        ws.write(`\t\t\t${camelCase(l.name)}: ${l.printType()},\n`);
+        ws.write(`${INDENT.repeat(3)}${camelCase(l.name)}: ${l.printType()},\n`);
       }
 
-      ws.write(`\t\t) {\n`);
+      ws.write(`${INDENT.repeat(2)}) {\n`);
       for (const l of this.fields) {
-        ws.write(`\t\t\tthis.${camelCase(l.name)} = ${camelCase(l.name)};\n`);
+        ws.write(`${INDENT.repeat(3)}this.${camelCase(l.name)} = ${camelCase(l.name)};\n`);
       }
-      ws.write(`\t\t}\n`);
+      ws.write(`${INDENT.repeat(2)}}\n`);
     }
 
-    ws.write(`\t}\n\n`);
+    ws.write(`${INDENT}}\n\n`);
   }
 }
 
@@ -164,7 +166,7 @@ class TsClassFields {
 
   printTypescript(ws: WriteStream) {
     if (this.isPublic) {
-      ws.write(`\t\tpublic `);
+      ws.write(`${INDENT.repeat(2)}public `);
     }
     ws.write(`${camelCase(this.name)}: ${this.printType()}\n`);
   }
@@ -181,7 +183,7 @@ class TsTypeNode {
   }
 
   printTypescript(ws: WriteStream) {
-    ws.write(`\texport type ${this.name} = ${this.value}\n\n`);
+    ws.write(`${INDENT}export type ${this.name} = ${this.value}\n\n`);
   }
 
 }
@@ -196,13 +198,13 @@ class TsEnumNode {
   }
 
   printTypescript(ws: WriteStream) {
-    ws.write(`\texport enum ${this.name} {\n`);
+    ws.write(`${INDENT}export enum ${this.name} {\n`);
 
     for (const [l, v] of this.values) {
-      ws.write(`\t\t${l} = ${v},\n`);
+      ws.write(`${INDENT.repeat(2)}${l} = ${v},\n`);
     }
 
-    ws.write(`\t}\n\n`);
+    ws.write(`${INDENT}}\n\n`);
   }
 }
 
