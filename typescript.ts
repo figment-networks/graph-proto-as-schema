@@ -1,6 +1,7 @@
 import { stripNamespace } from "./convert";
 import * as t from "proto-parser";
 import { WriteStream } from "fs";
+import { camelCase } from "./util";
 
 const INDENT = "  ";
 const INDENT_2 = INDENT.repeat(2);
@@ -219,8 +220,3 @@ class TsNamespace {
   }
 }
 
-function camelCase(str: String) {
-  return str.toLowerCase().replace(/[^a-zA-Z0-9]+(.)/g, function(_match, chr) {
-    return chr.toUpperCase();
-  });
-}

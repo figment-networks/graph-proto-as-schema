@@ -13,6 +13,7 @@ import {
 } from "./types";
 import * as t from "proto-parser";
 import * as graphql from "graphql";
+import { camelCase } from "./util";
 
 export function toSchemaObjects(
   protoDocument: t.ProtoDocument,
@@ -90,7 +91,7 @@ export function toSchemaObjects(
             }
 
             const fdn = new FieldDefinitionNode(
-              new NameNode(name),
+              new NameNode(camelCase(name)),
               tn as graphql.TypeNode
             );
             if (
