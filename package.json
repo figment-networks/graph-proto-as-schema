@@ -4,15 +4,19 @@
     "repository": "https://github.com/figment-networks/proto-to-schema",
     "license": "apache",
     "main": "index.js",
+    "type": "module",
     "scripts": {
         "gen-tendermint": "node ./dist/index.js -o ./outp  -d ./test/",
-        "gen-cosmos": "protoc --plugin=protoc-gen-as=./node_modules/.bin/as-proto-gen --as_out=. ./cosmos.v1.proto"
+        "gen-cosmos": "FILE_PATH=./cosmos.v1.ts protoc --plugin=protoc-gen-as=./node_modules/.bin/as-proto-gen --as_out=. ./cosmos.v1.proto && node wrap.js"
     },
     "dependencies": {
         "@types/graphql": "^14.5.0",
         "@types/node": "^16.11.1",
         "@types/yargs": "^17.0.4",
         "as-proto-gen": "^0.2.0",
+        "dotenv": "^16.0.0",
+        "express": "^4.17.3",
+        "fs": "^0.0.1-security",
         "graphql": "^15.6.1",
         "proto-parser": "^0.0.7",
         "typescript": "^4.4.4",
