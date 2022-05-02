@@ -38,12 +38,12 @@ async function process() {
         type: "boolean",
       })
       .default("force_non_null_lists", true, "by default apply the param")
-      .option("typescipt", {
+      .option("typescript", {
         description: "generate typescript",
         alias: "ts",
         type: "boolean",
       })
-      .default("typescipt", true)
+      .default("typescript", true)
       .option("typescript_namespace", {
         description: "namespace to apply when generating ts file.",
         type: "string",
@@ -66,7 +66,7 @@ async function process() {
       argv.pattern?.toString(),
       argv.output.toString(),
       argv.force_non_null_lists.valueOf(),
-      argv.typescipt.valueOf(),
+      argv.typescript.valueOf(),
       argv.typescript_namespace.toString()
     );
   } catch (e) {

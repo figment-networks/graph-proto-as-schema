@@ -72,6 +72,9 @@ export function toTypescriptDefinitions(
                 }
               }
             }
+            if (type === "google.protobuf.Any") {
+              type = "Any";
+            }
             const tcf = new TsClassFields(mdEl.name, type);
             if (mdEl.repeated) {
               tcf.isArray = true;
