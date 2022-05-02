@@ -1,7 +1,5 @@
 
 .DS_Store
-dist/convert.js
-dist/index.js
-dist/tsconfig.tsbuildinfo
-dist/types.js
 node_modules/
+/dist/
+/output/
