@@ -14,7 +14,7 @@ This will result in files being created inside `dist` directory.
 To run created application you need to run:
 
 ```bash
-    node ./dist/index.js -o ./outp  -d ./test/
+node ./dist/index.js -o ./output -d ../proto-cosmos/sf/type/v1 --typescript_namespace cosmos
 ```
 
 To see all arguments possible to supply use help:
