@@ -129,20 +129,11 @@ class TsClassNode {
     ws.write(`${INDENT}export class ${this.name} {\n`);
 
     if (this.fields !== undefined) {
+      ws.write(`${INDENT_2}constructor(\n`);
       for (const l of this.fields) {
-        l.printTypescript(ws);
+        ws.write(`${INDENT_3}public ${camelCase(l.name)}: ${l.printType()},\n`);
       }
-
-      ws.write(`\n${INDENT_2}constructor(\n`);
-      for (const l of this.fields) {
-        ws.write(`${INDENT_3}${camelCase(l.name)}: ${l.printType()},\n`);
-      }
-
-      ws.write(`${INDENT_2}) {\n`);
-      for (const l of this.fields) {
-        ws.write(`${INDENT_3}this.${camelCase(l.name)} = ${camelCase(l.name)};\n`);
-      }
-      ws.write(`${INDENT_2}}\n`);
+      ws.write(`${INDENT_2}) {}\n`)
     }
 
     ws.write(`${INDENT}}\n\n`);
